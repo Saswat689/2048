@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>2048 GAME - Saswat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Gloock&display=swap" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+    <style type="text/css">
+      *, *::before, *::after {
+          box-sizing: border-box;
+          font-family: Arial;
+      }
+
+      body {
+          background-color: #333;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          margin: 0;
+          margin-top: 2vmin;
+          font-size: 7.5vmin;
+      }
+
+      #game-board {
+          display: grid;
+          grid-template-columns: repeat(var(--grid-size), var(--cell-size));
+          grid-template-rows: repeat(var(--grid-size), var(--cell-size));
+          background-color: #CCC;
+          gap: var(--cell-gap);
+          border-radius: 1vmin;
+          padding: var(--cell-gap);
+          position: relative;
+      }
+
+      .cell {
+          background-color: #AAA;
+          border-radius: 1vmin;
+      }
+
+      .tile {
+          position: absolute;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: var(--cell-size);
+          height: var(--cell-size);
+          background-color: red;
+          border-radius: 1vmin;
+          top: calc(var(--y) * (var(--cell-size) + var(--cell-gap)) + var(--cell-gap));
+          left: calc(var(--x) * (var(--cell-size) + var(--cell-gap)) + var(--cell-gap));
+          font-weight: bold;
+          background-color: hsl(29, 80%, var(--background-lightness));
+          color: hsl(200, 25%, var(--text-lightness));
+          animation: show 200ms ease-in-out;
+          transition: 100ms ease-in-out;
+      }
+
+      #score-wrapper {
+        padding: 1vmin;
+        font-weight: bold;
+        letter-spacing: 2px;
+        display: flex;
+        flex-direction: column;
+        font-size: 2.4vmin;
+        color: #fff;
+        margin: 0;
+        padding: 0;
+    }
+    .title {
+        font-size: 5vmin;
+        text-align: center;
+        color: #fff;
+        margin: 0;
+        font-family: 'Gloock', serif;
+    }
+
+    #instructionsAlert,#gameOverAlert,#newBest {
+        width: 50%;
+        height: 90vh;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        background-color: #000000;
+        transform: translate(-50%, -50%);
+        padding-left: 2vmin;
+        padding-right: 2vmin;
+        opacity: 0;
+        -webkit-transition: all 0.5s ease-in-out;
+        -moz-transition: all 0.5s ease-in-out;
+        -ms-transition: all 0.5s ease-in-out;
+        -o-transition: all 0.5s ease-in-out;
+        transition: all 0.5s ease-in-out;
+        color: #aaa;
+        border-radius: 2vmin;
+        box-shadow: rgba(255, 255, 255, 0.35) 0px 5px 15px;
+    }
+
+    @media screen and (max-width: 600px) {
+      #instructionsAlert,#gameOverAlert,#newBest {
+        width: 90%;
+    }
+    .utility {
+        display: none;
+    }
+    body {
+        padding-top: 4vmin;
+    }
+    header {
+        flex-direction: column;
+    }
+    .title {
+        padding-bottom: 2vmin;
+    }
+}
+
+#gameOverAlert {
+    height: 30vh;
+}
+#newBest {
+    height: 30vh;
+}
+
+#instructionsAlert h3,#gameOverAlert h3,#newBest h3 {
+    color: #fff;
+    font-size: 6vmin;
+    text-align: center;
+    font-weight: bold;
+    font-family: 'Gloock', serif;
+}
+#newBest h3 {
+    margin-bottom: 0;
+}
+
+#newBest p {
+    margin: 12px;
+}
+
+#instructionsAlert p,#gameOverAlert p,#newBest p {
+    font-size: 3vmin;
+    text-align: center;
+    line-height: 1.3;
+}
+
+@keyframes show {
+  0% {
+    opacity: .5;
+    transform: scale(0);
+}
+}
+#score-pop span {
+    font-size: 6vmin; font-family: 'Anton', sans-serif;color: cyan;
+}
+.author {
+    font-size: 3vmin;
+    margin-top: 100px;
+    margin-bottom: 4vmin;
+    font-family: 'Anton', sans-serif;
+    color: #ccc;
+}
+
+</style>
+<script type="text/javascript">
+
+    let reloadPage = () => {
+        location.reload()
+    }
+
+    $(document).ready(function(e) {   
+    // your code here
+    userLogged = localStorage.getItem("user");
+    if (userLogged == null) {
+        $('#instructionsAlert').css('opacity', 1);
+        localStorage.setItem("user",true)
+    }
+        $('.closePopup').on('click', function() {
+            console.log('clicked')
+            $('#instructionsAlert').css('opacity', 0);
+            $('#gameOverAlert').css('opacity', 0);
+            $('#newBest').css('opacity', 0);
+        });
+    });
+
+</script>
+</head>
+<body>
+    <main>
+        <div class="utility" style="position: absolute; top: 1vmin; right: 1vmin; cursor: pointer;">
+            <span style="font-size: 5vmin; color: #fff;" onclick="reloadPage()">↻</span>
+            <span style="font-size: 5vmin">⚙️</span>
+        </div>
+        <header style="display: flex; justify-content: space-between; align-items: center;">
+            <p class="title" style="font-weight: bold; letter-spacing: 2px;">ULTIMATE <span class="title" style="color: #ea913e;">2048</span></p>
+            <div id="score-wrapper">
+                <div style="margin-bottom: 1vmin;">
+                    <span style="color: #ccc;">SCORE: </span><span id="score"style="color: #ea913e;"></span>
+                </div>
+                <div>
+                    <span style="color: #ccc;">BEST: </span><span id="best_score"style="color: #ea913e;"></span>
+                </div>
+            </div>
+        </header>
+        <hr>
+        <div id="game-board"></div>
+        <div id="instructionsAlert">
+            <span class="closePopup" style="position: absolute; top: 2vmin; right: 2vmin; font-size: 6vmin; cursor: pointer;">&#xD7;</span>
+            <h3>How to play</h3>
+            <p>Combine tiles of the same number in an attempt to create a tile with the value 2048</p>
+            <p>Pressing the arrow keys or swiping across the game board will move all tiles in the direction of the key pressed/swipe. After all the tiles are done moving a new tile with the value of 2 or 4 will be created in a random empty cell.</p>
+            <p>Two tiles with the same number will merge when they collide to create a single tile with double the value.</p>
+            <p>The game is over when there are no valid ways for you to move the tiles.</p>
+        </div>
+        <div id="gameOverAlert">
+            <span class="closePopup" style="position: absolute; top: 2vmin; right: 2vmin; font-size: 6vmin; cursor: pointer;">&#xD7;</span>
+            <h3 style="margin-bottom: 1vmin;">Game Over</h3>
+            <p style="font-size: 8vmin; color: #ea913e; margin: 0; font-weight: bold; cursor: pointer;" onclick="reloadPage()">↻</p>
+        </div>
+        <div id="newBest">
+            <span class="closePopup" style="position: absolute; top: 2vmin; right: 2vmin; font-size: 6vmin; cursor: pointer;">&#xD7;</span>
+            <h3>Hey New Score !</h3>
+            <p id="score-pop"></p>
+        </div>
+        <span class="author">Made with &#x2764;&#xFE0F; by <i class="author" style="color: #ea913e;">saswat</i></span>
+    </main>
+
+    <script type="module">
+
+        window.addEventListener("keydown", function(e) {
+            if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) {
+                e.preventDefault();
+            }
+        }, false);
+
+
+        const gameBoard = document.getElementById('game-board')
+        const scoreSpan = document.getElementById("score")
+
+        const GRID_SIZE = 4
+        const CELL_SIZE = 18
+        const CELL_GAP = 2
+
+        class Grid {
+          #cells
+
+          constructor(gridElement) {
+            gridElement.style.setProperty("--grid-size", GRID_SIZE)
+            gridElement.style.setProperty("--cell-size", `${CELL_SIZE}vmin`)
+            gridElement.style.setProperty("--cell-gap", `${CELL_GAP}vmin`)
+            this.#cells = createCellElements(gridElement).map((cellElement, index) => {
+              return new Cell(
+                cellElement,
+                index % GRID_SIZE,
+                Math.floor(index / GRID_SIZE)
+                )
+          })
+        }
+
+        get cells() {
+            return this.#cells
+        }
+
+        get cellsByRow() {
+            return this.#cells.reduce((cellGrid, cell) => {
+              cellGrid[cell.y] = cellGrid[cell.y] || []
+              cellGrid[cell.y][cell.x] = cell
+              return cellGrid
+          }, [])
+        }
+
+        get cellsByColumn() {
+            return this.#cells.reduce((cellGrid, cell) => {
+              cellGrid[cell.x] = cellGrid[cell.x] || []
+              cellGrid[cell.x][cell.y] = cell
+              return cellGrid
+          }, [])
+        }
+
+        get #emptyCells() {
+            return this.#cells.filter(cell => cell.tile == null)
+        }
+
+        randomEmptyCell() {
+            const randomIndex = Math.floor(Math.random() * this.#emptyCells.length)
+            return this.#emptyCells[randomIndex]
+        }
+    }
+    var audioBonus = new Audio('bonus.wav');
+    var audioSuccess = new Audio('success.wav');
+    var audioLosing = new Audio('losing.wav');
+
+    class Cell {
+      #cellElement
+      #x
+      #y
+      #tile
+      #mergeTile
+
+      constructor(cellElement, x, y) {
+        this.#cellElement = cellElement
+        this.#x = x
+        this.#y = y
+    }
+
+    get x() {
+        return this.#x
+    }
+
+    get y() {
+        return this.#y
+    }
+
+    get tile() {
+        return this.#tile
+    }
+
+    set tile(value) {
+        this.#tile = value
+        if (value == null) return
+            this.#tile.x = this.#x
+        this.#tile.y = this.#y
+    }
+
+    get mergeTile() {
+        return this.#mergeTile
+    }
+
+
+    set mergeTile(value) {
+
+        audioBonus.play();
+
+        this.#mergeTile = value
+        if (value == null) return
+            this.#mergeTile.x = this.#x
+        this.#mergeTile.y = this.#y
+    }
+
+    canAccept(tile) {
+        return (
+          this.tile == null ||
+          (this.mergeTile == null && this.tile.value === tile.value)
+          )
+    }
+
+    mergeTiles() {
+        if (this.tile == null || this.mergeTile == null) return
+            this.tile.value = this.tile.value + this.mergeTile.value
+        this.mergeTile.remove()
+        this.mergeTile = null
+    }
+}
+
+class Tile {
+  #tileElement
+  #x
+  #y
+  #value
+
+  constructor(tileContainer, value = Math.random() > 0.5 ? 2 : 4) {
+    this.#tileElement = document.createElement("div")
+    this.#tileElement.classList.add("tile")
+    tileContainer.append(this.#tileElement)
+    this.value = value
+}
+
+get value() {
+    return this.#value
+}
+
+set value(v) {
+    this.#value = v
+
+    this.#tileElement.textContent = v
+    const power = Math.log2(v)
+    const backgroundLightness = 100 - power * 6
+    this.#tileElement.style.setProperty(
+      "--background-lightness",
+      `${backgroundLightness}%`
+      )
+    this.#tileElement.style.setProperty(
+      "--text-lightness",
+      `${backgroundLightness <= 65 ? 90 : 10}%`
+      )
+}5
+static get getScores() {
+    return this.score
+}
+
+set x(value) {
+    this.#x = value
+    this.#tileElement.style.setProperty("--x", value)
+}
+
+set y(value) {
+    this.#y = value
+    this.#tileElement.style.setProperty("--y", value)
+}
+
+remove() {
+    this.#tileElement.remove()
+}
+
+waitForTransition(animation = false) {
+    return new Promise(resolve => {
+      this.#tileElement.addEventListener(
+        animation ? "animationend" : "transitionend",
+        resolve,
+        {
+          once: true,
+      }
+      )
+  })
+}
+}
+
+function createCellElements(gridElement) {
+  const cells = []
+  for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+    const cell = document.createElement("div")
+    cell.classList.add("cell")
+    cells.push(cell)
+    gridElement.append(cell)
+}
+return cells
+}
+
+const grid = new Grid(gameBoard)
+grid.randomEmptyCell().tile = new Tile(gameBoard)
+grid.randomEmptyCell().tile = new Tile(gameBoard)
+setupInput()
+
+function setupInput() {
+  window.addEventListener("keydown", handleInput, { once: true })
+}
+
+var score = 0;
+let best = localStorage.getItem("best")
+
+document.getElementById('best_score').innerText = best == null ? 0 : best
+
+async function handleInput(e) {
+  switch (e.key) {
+    case "ArrowUp":
+    if (!canMoveUp()) {
+        setupInput()
+        return
+    }
+    await moveUp()
+    break
+    case "ArrowDown":
+    if (!canMoveDown()) {
+        setupInput()
+        return
+    }
+    await moveDown()
+    break
+    case "ArrowLeft":
+    if (!canMoveLeft()) {
+        setupInput()
+        return
+    }
+    await moveLeft()
+    break
+    case "ArrowRight":
+    if (!canMoveRight()) {
+        setupInput()
+        return
+    }
+    await moveRight()
+    break
+    default:
+    setupInput()
+    return
+}
+grid.cells.forEach(cell => cell.mergeTiles())
+
+const newTile = new Tile(gameBoard)
+grid.randomEmptyCell().tile = newTile
+
+if (!canMoveUp() && !canMoveDown() && !canMoveLeft() && !canMoveRight()) {
+  newTile.waitForTransition(true).then(() => {
+    if(best == null || score > best) {
+        audioSuccess.play()
+        $('#score-pop').html(`<span>${score} &#127942<span>`)
+        $('#newBest').css('opacity',1)
+        localStorage.setItem("best",score)
+    } else {
+        audioLosing.play();
+        $('#gameOverAlert').css('opacity', 1);
+    }
+})
+
+  return
+}
+
+setupInput()
+}
+
+function moveUp() {
+  return slideTiles(grid.cellsByColumn)
+}
+
+function moveDown() {
+  return slideTiles(grid.cellsByColumn.map(column => [...column].reverse()))
+}
+
+function moveLeft() {
+  return slideTiles(grid.cellsByRow)
+}
+
+function moveRight() {
+  return slideTiles(grid.cellsByRow.map(row => [...row].reverse()))
+}
+
+function slideTiles(cells) {
+    score = 0;
+    grid.cells.forEach(cell => cell.tile == undefined ? null : score += cell.tile.value)
+    scoreSpan.innerText = score
+    console.log(score)
+    return Promise.all(
+        cells.flatMap(group => {
+          const promises = []
+          for (let i = 1; i < group.length; i++) {
+            const cell = group[i]
+            if (cell.tile == null) continue
+                let lastValidCell
+            for (let j = i - 1; j >= 0; j--) {
+              const moveToCell = group[j]
+              if (!moveToCell.canAccept(cell.tile)) break
+                  lastValidCell = moveToCell
+          }
+
+          if (lastValidCell != null) {
+              promises.push(cell.tile.waitForTransition())
+              if (lastValidCell.tile != null) {
+                lastValidCell.mergeTile = cell.tile
+            } else {
+                lastValidCell.tile = cell.tile
+            }
+            cell.tile = null
+        }
+    }
+    return promises
+})
+        )
+}
+
+function canMoveUp() {
+  return canMove(grid.cellsByColumn)
+}
+
+function canMoveDown() {
+  return canMove(grid.cellsByColumn.map(column => [...column].reverse()))
+}
+
+function canMoveLeft() {
+  return canMove(grid.cellsByRow)
+}
+
+function canMoveRight() {
+  return canMove(grid.cellsByRow.map(row => [...row].reverse()))
+}
+
+function canMove(cells) {
+  return cells.some(group => {
+    return group.some((cell, index) => {
+      if (index === 0) return false
+          if (cell.tile == null) return false
+              const moveToCell = group[index - 1]
+          return moveToCell.canAccept(cell.tile)
+      })
+})
+}
+
+
+
+</script>
+</body>
+</html>
